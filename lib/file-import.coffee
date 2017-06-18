@@ -156,6 +156,22 @@ formatClassesAndId = (config)->
   output
 
 
+sliceLines = (config, content)->
+  if config?.line_no
+    codeBlockLines = content.split('\n')
+    codeBlockLineBegin = parseInt(config.line_no) - 1 or 0
+    codeBlockLineBegin = 0 if codeBlockLineBegin < 0
+    newContent = codeBlockLines.slice(codeBlockLineBegin, codeBlockLineBegin + 1).join('\n') or ''
+  else if config?.line_begin
+    codeBlockLines = content.split('\n')
+    codeBlockLineBegin = parseInt(config.line_begin) - 1 or 0
+    codeBlockLineBegin = 0 if codeBlockLineBegin < 0
+    codeBlockLineEnd = config.line_end or codeBlockLines.length - 1
+    newContent = codeBlockLines.slice(codeBlockLineBegin, codeBlockLineEnd).join('\n') or ''
+  else
+    newContent = content
+
+
 ###
 @param {String} inputString, required
 @param {Object} filesCache, optional
@@ -268,6 +284,8 @@ fileImport = (inputString, {filesCache, fileDirectoryPath, projectDirectoryPath,
             filesCache?[absoluteFilePath] = fileContent
             if config?.code_block
               fileExtension = extname.slice(1, extname.length)
+              fileContent = sliceLines(config, fileContent)
+
               output = "```#{fileExtensionToLanguageMap[fileExtension] or fileExtension} #{formatClassesAndId(config)}  \n#{fileContent}\n```  "
             else if config?.code_chunk
               if !config.id
@@ -279,6 +297,8 @@ fileImport = (inputString, {filesCache, fileDirectoryPath, projectDirectoryPath,
               output = "```{#{fileExtensionToLanguageMap[fileExtension] or fileExtension} #{configStr}}  \n#{fileContent}\n```  "
               # filesCache?[absoluteFilePath] = output
             else if extname in markdownFileExtensions # markdown files
+              fileContent = sliceLines(config, fileContent)
+
               # this return here is necessary
               return fileImport(fileContent, {filesCache, projectDirectoryPath, useAbsoluteImagePath: true, fileDirectoryPath: path.dirname(absoluteFilePath)}).then ({outputString:output})->
                 output = '\n' + output + '  '
@@ -290,6 +310,8 @@ fileImport = (inputString, {filesCache, fileDirectoryPath, projectDirectoryPath,
               # filesCache?[absoluteFilePath] = output
             else if extname == '.csv'  # csv file
               Baby ?= require('babyparse')
+              fileContent = sliceLines(config, fileContent)
+
               parseResult = Baby.parse(fileContent.trim())
               if parseResult.errors.length
                 output = "<pre>#{parseResult.errors[0]}</pre>  "
@@ -298,6 +320,8 @@ fileImport = (inputString, {filesCache, fileDirectoryPath, projectDirectoryPath,
                 output = _2DArrayToMarkdownTable(parseResult.data)
                 # filesCache?[absoluteFilePath] = output
             else if extname in ['.css', '.less'] # css or less file
+              fileContent = sliceLines(config, fileContent)
+
               output = "<style>#{fileContent}</style>"
               # filesCache?[absoluteFilePath] = output
             else if extname == '.pdf'
@@ -336,6 +360,8 @@ fileImport = (inputString, {filesCache, fileDirectoryPath, projectDirectoryPath,
                   output = "<script>#{fileContent}</script>"
             else # codeblock
               fileExtension = extname.slice(1, extname.length)
+              fileContent = sliceLines(config, fileContent)
+
               output = "```#{fileExtensionToLanguageMap[fileExtension] or fileExtension} #{formatClassesAndId(config)}  \n#{fileContent}\n```  "
               # filesCache?[absoluteFilePath] = output
 
