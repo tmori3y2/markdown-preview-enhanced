@@ -619,7 +619,16 @@ resolveImagePathAndCodeBlock = (html, graphData={}, codeChunksData={},  option={
 
     if parameters
       addClassesAndId(highlightedBlock, parameters)
+
       if highlightedBlock.hasClass('lineNo')
+        # ckecks 'resetNo_' classes.
+        className =  highlightedBlock.attr('class')
+        resetNoClasses = className.match(/resetNo_\d+/)
+        resetNo = parseInt(resetNoClasses?[0].replace('resetNo_', '')) - 1 or 0
+        if resetNo > 0
+          # set initial lineNo.
+          highlightedBlock.css("counter-reset", "lineNo #{resetNo}")
+
         addLineNumber(highlightedBlock)
 
     $(preElement).replaceWith(highlightedBlock)

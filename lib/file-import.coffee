@@ -149,6 +149,22 @@ formatClassesAndId = (config)->
   return '' if !config
   id = config.id
   classes = config.class or 'code-block'
+
+  # overwrite classes by line_begin/line_no options if necessary
+  if classes.match(/lineNo/)
+    # overwrite by line_no option if necessary
+    if config.line_no
+      startLineNo = parseInt(config.line_no) or 1
+      startLineNo = 0 if startLineNo < 0
+      if startLineNo > 1
+        classes = classes.replace('lineNo', "lineNo resetNo_#{startLineNo}")
+    # overwrite classes by line_begin option if necessary
+    else if config.line_begin
+      startLineNo = parseInt(config.line_begin) or 1
+      startLineNo = 0 if startLineNo < 0
+      if startLineNo > 1
+        classes = classes.replace('lineNo', "lineNo resetNo_#{startLineNo}")
+
   output = '{'
   output += ('#' + id + ' ') if id
   output += ('.' + classes.replace(/\s+/g, ' .')  + ' ') if classes
@@ -285,7 +301,6 @@ fileImport = (inputString, {filesCache, fileDirectoryPath, projectDirectoryPath,
             if config?.code_block
               fileExtension = extname.slice(1, extname.length)
               fileContent = sliceLines(config, fileContent)
-
               output = "```#{fileExtensionToLanguageMap[fileExtension] or fileExtension} #{formatClassesAndId(config)}  \n#{fileContent}\n```  "
             else if config?.code_chunk
               if !config.id
@@ -311,7 +326,6 @@ fileImport = (inputString, {filesCache, fileDirectoryPath, projectDirectoryPath,
             else if extname == '.csv'  # csv file
               Baby ?= require('babyparse')
               fileContent = sliceLines(config, fileContent)
-
               parseResult = Baby.parse(fileContent.trim())
               if parseResult.errors.length
                 output = "<pre>#{parseResult.errors[0]}</pre>  "
@@ -320,8 +334,6 @@ fileImport = (inputString, {filesCache, fileDirectoryPath, projectDirectoryPath,
                 output = _2DArrayToMarkdownTable(parseResult.data)
                 # filesCache?[absoluteFilePath] = output
             else if extname in ['.css', '.less'] # css or less file
-              fileContent = sliceLines(config, fileContent)
-
               output = "<style>#{fileContent}</style>"
               # filesCache?[absoluteFilePath] = output
             else if extname == '.pdf'
@@ -361,7 +373,6 @@ fileImport = (inputString, {filesCache, fileDirectoryPath, projectDirectoryPath,
             else # codeblock
               fileExtension = extname.slice(1, extname.length)
               fileContent = sliceLines(config, fileContent)
-
               output = "```#{fileExtensionToLanguageMap[fileExtension] or fileExtension} #{formatClassesAndId(config)}  \n#{fileContent}\n```  "
               # filesCache?[absoluteFilePath] = output
 
