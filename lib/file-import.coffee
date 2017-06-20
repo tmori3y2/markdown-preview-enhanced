@@ -263,6 +263,26 @@ fileImport = (inputString, {filesCache, fileDirectoryPath, projectDirectoryPath,
           # filesCache?[absoluteFilePath] = output
 
           return helper(end+1, lineNo+1, outputString+output+'\n')
+        else if extname in ['.puml', '.plantuml', '.iuml'] and config?.include != undefined # plantuml include
+          includeBlocks = config.include ? [0]
+          includeBlocks = [config.include] if not (includeBlocks instanceof Array)
+
+          if config?.code_block
+            output = "```puml #{formatClassesAndId(config)}  \n@startuml\n"
+          else
+            output = "```puml\n@startuml\n"
+
+          for blockNo in includeBlocks
+            output += "!include \"#{filePath}!#{blockNo}\"\n"
+
+          if config?.direction == "LR"
+            output += "left to right direction\n"
+          else if config?.direction == "TB"
+            output += "top to bottom direction\n"
+
+          output += "@enduml\n```  "
+
+          return helper(end+1, lineNo+1, outputString+output+'\n')
         else
           loadFile(absoluteFilePath, {imageDirectoryPath, fileDirectoryPath, forPreview}, filesCache).then (fileContent)->
             filesCache?[absoluteFilePath] = fileContent
