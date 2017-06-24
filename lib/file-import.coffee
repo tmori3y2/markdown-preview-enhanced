@@ -182,7 +182,7 @@ sliceLines = (config, content)->
     codeBlockLines = content.split('\n')
     codeBlockLineBegin = parseInt(config.line_begin) - 1 or 0
     codeBlockLineBegin = 0 if codeBlockLineBegin < 0
-    codeBlockLineEnd = config.line_end or codeBlockLines.length - 1
+    codeBlockLineEnd = config.line_end or codeBlockLines.length
     newContent = codeBlockLines.slice(codeBlockLineBegin, codeBlockLineEnd).join('\n') or ''
   else
     newContent = content
@@ -297,7 +297,7 @@ fileImport = (inputString, {filesCache, fileDirectoryPath, projectDirectoryPath,
         else
           loadFile(absoluteFilePath, {imageDirectoryPath, fileDirectoryPath, forPreview}, filesCache).then (fileContent)->
             filesCache?[absoluteFilePath] = fileContent
-            if config?.code_block or config?.class
+            if config?.code_block
               fileExtension = extname.slice(1, extname.length)
               fileContent = sliceLines(config, fileContent)
               output = "```#{fileExtensionToLanguageMap[fileExtension] or fileExtension} #{formatClassesAndIdAndAttrs(config)}  \n#{fileContent}\n```  "
