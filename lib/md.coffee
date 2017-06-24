@@ -618,13 +618,11 @@ resolveImagePathAndCodeBlock = (html, graphData={}, codeChunksData={},  option={
     highlightedBlock.removeClass('editor').addClass('lang-' + lang)
 
     if parameters
-      addClassesAndId(highlightedBlock, parameters)
+      addClassesAndIdAndAttrs(highlightedBlock, parameters)
 
       if highlightedBlock.hasClass('lineNo')
-        # ckecks 'resetNo_' classes.
-        className =  highlightedBlock.attr('class')
-        resetNoClasses = className.match(/resetNo_\d+/)
-        resetNo = parseInt(resetNoClasses?[0].replace('resetNo_', '')) - 1 or 0
+        startLineNo = highlightedBlock.attr('line_no') or highlightedBlock.attr('line_begin') or 1
+        resetNo = parseInt(startLineNo) - 1
         if resetNo > 0
           # set initial lineNo.
           highlightedBlock.css("counter-reset", "lineNo #{resetNo}")

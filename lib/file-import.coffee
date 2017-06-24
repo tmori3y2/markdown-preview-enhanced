@@ -145,33 +145,33 @@ loadFile = (filePath, {imageDirectoryPath, fileDirectoryPath, forPreview}, files
 createAnchor = (lineNo)->
   "\n\n<p data-line=\"#{lineNo}\" class=\"sync-line\" style=\"margin:0;\"></p>\n\n"
 
+# {id:id1, class:"class1 class2"} ->
+# return {#id1 .class1 .class2 }
 formatClassesAndId = (config)->
   return '' if !config
   id = config.id
   classes = config.class or 'code-block'
-
-  # overwrite classes by line_begin/line_no options if necessary
-  if classes.match(/lineNo/)
-    # overwrite by line_no option if necessary
-    if config.line_no
-      startLineNo = parseInt(config.line_no) or 1
-      startLineNo = 0 if startLineNo < 0
-      if startLineNo > 1
-        classes = classes.replace('lineNo', "lineNo resetNo_#{startLineNo}")
-    # overwrite classes by line_begin option if necessary
-    else if config.line_begin
-      startLineNo = parseInt(config.line_begin) or 1
-      startLineNo = 0 if startLineNo < 0
-      if startLineNo > 1
-        classes = classes.replace('lineNo', "lineNo resetNo_#{startLineNo}")
-
   output = '{'
   output += ('#' + id + ' ') if id
   output += ('.' + classes.replace(/\s+/g, ' .')  + ' ') if classes
   output += '}'
   output
 
+# {id:id1, class:"class1 class2", key1:value1, key2:value2} ->
+# return {#id1 .class1 .class2 key1=value1 key2=value2 }
+formatClassesAndIdAndAttrs = (config)->
+  return '' if !config
+  id = config.id
+  classes = config.class or 'code-block'
+  output = '{'
+  output += ('#' + id + ' ') if id
+  output += ('.' + classes.replace(/\s+/g, ' .')  + ' ') if classes
+  for key, value of config
+      output += ("#{key}=\"#{value}\"" + ' ') if key != "id" and key != "class" and key != "code_block"
+  output += '}'
+  output
 
+# slice the imported text lines if necessary
 sliceLines = (config, content)->
   if config?.line_no
     codeBlockLines = content.split('\n')
@@ -186,7 +186,6 @@ sliceLines = (config, content)->
     newContent = codeBlockLines.slice(codeBlockLineBegin, codeBlockLineEnd).join('\n') or ''
   else
     newContent = content
-
 
 ###
 @param {String} inputString, required
@@ -298,10 +297,10 @@ fileImport = (inputString, {filesCache, fileDirectoryPath, projectDirectoryPath,
         else
           loadFile(absoluteFilePath, {imageDirectoryPath, fileDirectoryPath, forPreview}, filesCache).then (fileContent)->
             filesCache?[absoluteFilePath] = fileContent
-            if config?.code_block
+            if config?.code_block or config?.class
               fileExtension = extname.slice(1, extname.length)
               fileContent = sliceLines(config, fileContent)
-              output = "```#{fileExtensionToLanguageMap[fileExtension] or fileExtension} #{formatClassesAndId(config)}  \n#{fileContent}\n```  "
+              output = "```#{fileExtensionToLanguageMap[fileExtension] or fileExtension} #{formatClassesAndIdAndAttrs(config)}  \n#{fileContent}\n```  "
             else if config?.code_chunk
               if !config.id
                 md5 ?= require 'md5'
@@ -373,7 +372,7 @@ fileImport = (inputString, {filesCache, fileDirectoryPath, projectDirectoryPath,
             else # codeblock
               fileExtension = extname.slice(1, extname.length)
               fileContent = sliceLines(config, fileContent)
-              output = "```#{fileExtensionToLanguageMap[fileExtension] or fileExtension} #{formatClassesAndId(config)}  \n#{fileContent}\n```  "
+              output = "```#{fileExtensionToLanguageMap[fileExtension] or fileExtension} #{formatClassesAndIdAndAttrs(config)}  \n#{fileContent}\n```  "
               # filesCache?[absoluteFilePath] = output
 
             return helper(end+1, lineNo+1, outputString+output+'\n')
